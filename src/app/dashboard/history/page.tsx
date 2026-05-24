@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSession } from "@/lib/session";
 import { toast } from "sonner";
+import { MACHINE_MAP, SHIFTS } from "@/lib/constants";
 
 export default function HistoryPage() {
   const [session, setSession] = useState<any>(null);
@@ -11,7 +12,6 @@ export default function HistoryPage() {
   const [endLogs, setEndLogs] = useState<any[]>([]);
   const [stopLogs, setStopLogs] = useState<any[]>([]);
   const [startLogs, setStartLogs] = useState<any[]>([]);
-  const [filterMachine, setFilterMachine] = useState("");
   const [filterShift, setFilterShift] = useState("");
 
   useEffect(() => {
@@ -39,36 +39,30 @@ export default function HistoryPage() {
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("tr-TR");
   const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("tr-TR");
+  const machineName = MACHINE_MAP[session?.role] || "";
+
+  const filtered = (logs: any[]) => logs.filter(l =>
+    (!filterShift || l.shift === filterShift)
+  );
 
   const tabs = [
-    { key: "end", label: "Gün Sonu", count: endLogs.length },
+    { key: "end", label: "Kapanışlar", count: endLogs.length },
     { key: "stop", label: "Duruşlar", count: stopLogs.length },
     { key: "start", label: "Startlar", count: startLogs.length },
   ];
-
-  const filtered = (logs: any[]) => logs.filter(l =>
-    (!filterMachine || l.machine_name === filterMachine) &&
-    (!filterShift || l.shift === filterShift)
-  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-600">
         <h2 className="text-2xl font-black text-gray-800">GEÇMİŞ KAYITLAR</h2>
-        <p className="text-gray-500 mt-1">Son 50 kayıt gösteriliyor</p>
+        <p className="text-gray-500 mt-1">{machineName} — Son 50 kayıt</p>
       </div>
 
-      
-      <div className="bg-white rounded-lg shadow p-4 flex gap-4">
-        <select value={filterMachine} onChange={(e) => setFilterMachine(e.target.value)}
-          className="border-2 border-gray-300 rounded-lg p-2 font-bold text-sm focus:border-purple-500 outline-none bg-white flex-1">
-          <option value="">Tüm Makineler</option>
-          {["Mikser", "Pastör","Dolum"].map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
+      <div className="bg-white rounded-lg shadow p-4">
         <select value={filterShift} onChange={(e) => setFilterShift(e.target.value)}
-          className="border-2 border-gray-300 rounded-lg p-2 font-bold text-sm focus:border-purple-500 outline-none bg-white flex-1">
+          className="border-2 border-gray-300 rounded-lg p-2 font-bold text-sm focus:border-purple-500 outline-none bg-white w-full">
           <option value="">Tüm Vardiyalar</option>
-          {["Sabah (08.30-18.00)" ,"Sabah (08.30-20.30)"].map(s => <option key={s} value={s}>{s}</option>)}
+          {SHIFTS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
@@ -88,7 +82,6 @@ export default function HistoryPage() {
               <tr>
                 <th className="text-left p-3 font-bold">Tarih</th>
                 <th className="text-left p-3 font-bold">Personel</th>
-                <th className="text-left p-3 font-bold">Makine</th>
                 <th className="text-left p-3 font-bold">Vardiya</th>
                 <th className="text-center p-3 font-bold">Toplam</th>
                 <th className="text-center p-3 font-bold text-red-600">Fire</th>
@@ -101,7 +94,6 @@ export default function HistoryPage() {
                 <tr key={log.id} className="border-b hover:bg-gray-50">
                   <td className="p-3">{fmtDate(log.created_at)}</td>
                   <td className="p-3 font-semibold">{log.personnel_name}</td>
-                  <td className="p-3">{log.machine_name}</td>
                   <td className="p-3 text-xs">{log.shift}</td>
                   <td className="p-3 text-center font-bold">{log.total_cans}</td>
                   <td className="p-3 text-center font-bold text-red-600">{log.waste_cans}</td>
@@ -112,7 +104,7 @@ export default function HistoryPage() {
                   </td>
                 </tr>
               ))}
-              {filtered(endLogs).length === 0 && <tr><td colSpan={8} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
+              {filtered(endLogs).length === 0 && <tr><td colSpan={7} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
             </tbody>
           </table>
         )}
@@ -123,7 +115,6 @@ export default function HistoryPage() {
               <tr>
                 <th className="text-left p-3 font-bold">Tarih</th>
                 <th className="text-left p-3 font-bold">Personel</th>
-                <th className="text-left p-3 font-bold">Makine</th>
                 <th className="text-left p-3 font-bold">Neden</th>
                 <th className="text-center p-3 font-bold">Başlangıç</th>
                 <th className="text-center p-3 font-bold">Bitiş</th>
@@ -136,7 +127,6 @@ export default function HistoryPage() {
                 <tr key={log.id} className="border-b hover:bg-gray-50">
                   <td className="p-3">{fmtDate(log.created_at)}</td>
                   <td className="p-3 font-semibold">{log.personnel_name}</td>
-                  <td className="p-3">{log.machine_name}</td>
                   <td className="p-3 font-bold">{log.stop_reason}</td>
                   <td className="p-3 text-center">{fmtTime(log.start_time)}</td>
                   <td className="p-3 text-center">{log.end_time ? fmtTime(log.end_time) : <span className="text-red-500 font-bold">Açık</span>}</td>
@@ -147,7 +137,7 @@ export default function HistoryPage() {
                   </td>
                 </tr>
               ))}
-              {filtered(stopLogs).length === 0 && <tr><td colSpan={8} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
+              {filtered(stopLogs).length === 0 && <tr><td colSpan={7} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
             </tbody>
           </table>
         )}
@@ -158,7 +148,6 @@ export default function HistoryPage() {
               <tr>
                 <th className="text-left p-3 font-bold">Tarih</th>
                 <th className="text-left p-3 font-bold">Personel</th>
-                <th className="text-left p-3 font-bold">Makine</th>
                 <th className="text-left p-3 font-bold">Vardiya</th>
                 <th className="text-center p-3 font-bold">Saat</th>
                 <th className="text-left p-3 font-bold">Not</th>
@@ -170,7 +159,6 @@ export default function HistoryPage() {
                 <tr key={log.id} className="border-b hover:bg-gray-50">
                   <td className="p-3">{fmtDate(log.start_time)}</td>
                   <td className="p-3 font-semibold">{log.personnel_name}</td>
-                  <td className="p-3">{log.machine_name}</td>
                   <td className="p-3 text-xs">{log.shift}</td>
                   <td className="p-3 text-center font-bold text-green-600">{fmtTime(log.start_time)}</td>
                   <td className="p-3 text-gray-500 text-xs">{log.note || "-"}</td>
@@ -180,7 +168,7 @@ export default function HistoryPage() {
                   </td>
                 </tr>
               ))}
-              {filtered(startLogs).length === 0 && <tr><td colSpan={7} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
+              {filtered(startLogs).length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
             </tbody>
           </table>
         )}

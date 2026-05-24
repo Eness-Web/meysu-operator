@@ -1,17 +1,66 @@
-export const PERSONNEL = ["ENES ÇELİK", "EREN ÜNAL"];
+export const SHIFTS = ["08:30 - 18:00"];
 
-export const MACHINES = ["Mikser", "Pastör" ,"Dolum"];
-
-export const SHIFTS = ["Sabah (08:30-18:00)", "Sabah (08:30-20:30)",];
-
-export const STOP_REASONS = [
+export const STOP_REASONS: string[] = [
   "Makine Arızası",
-  "Hammadde Eksikliği",
-  "Elektrik Kesintisi",
-  "Planlı Bakım",
-  "Kalıp Değişimi",
-  "Hat Temizliği",
-  "Ürün Değişimi",
-  "Operatör Molası",
   "Diğer",
 ];
+
+export const PERSONNEL_MAP: Record<string, string[]> = {
+  // Kutu Hattı
+  dolum: ["ENES ÇELİK", "EREN ÜNAL"],
+  paketleme: ["YUSUF ÖTER", "BURHAN DEMİRTAŞ"],
+  paletleme: ["SAVAŞ AÇAR", "ERCAN KARAGÖZ"],
+  depal: ["ŞABAN AYBUGA", "EYÜP KARAMAN"],
+
+  // Pet Hattı
+  pet_dolum: ["ALİ YILMAZ"],
+  pet_sisirme: [],
+  pet_etiketleme: [],
+  pet_paketleme: [],
+  pet_paletleme: [],
+
+  // Cam Hattı
+  cam_dolum: ["MAHMUT EKİCİ", "MEHMET KAYA"],
+  cam_paketleme: [],
+  cam_paletleme: [],
+};
+
+export const MACHINE_MAP: Record<string, string> = {
+  // Kutu Hattı
+  dolum: "Kutu Dolum",
+  paketleme: "Kutu Paketleme",
+  paletleme: "Kutu Paletleme",
+  depal: "Kutu Depal",
+
+  // Pet Hattı
+  pet_dolum: "Pet Dolum",
+  pet_sisirme: "Pet Şişirme",
+  pet_etiketleme: "Pet Etiketleme",
+  pet_paketleme: "Pet Paketleme",
+  pet_paletleme: "Pet Paletleme",
+
+  // Cam Hattı
+  cam_dolum: "Cam Dolum",
+  cam_paketleme: "Cam Paketleme",
+  cam_paletleme: "Cam Paletleme",
+};
+
+export const UNIT_MAP: Record<string, string> = {
+  // Kutu Hattı
+  dolum: "Kutu",
+  paketleme: "Kutu",
+  paletleme: "Kutu",
+  depal: "Kutu",
+
+  // Pet Hattı
+  pet_dolum: "Şişe",
+  pet_sisirme: "Şişe",
+  pet_etiketleme: "Şişe",
+  pet_paketleme: "Şişe",
+  pet_paletleme: "Şişe",
+
+  // Cam Hattı
+  cam_dolum: "Cam Şişe",
+  cam_paketleme: "Cam Şişe",
+  cam_paletleme: "Cam Şişe",
+};

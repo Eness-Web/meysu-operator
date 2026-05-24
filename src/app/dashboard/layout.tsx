@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { getSession, clearSession, type OperatorSession } from "@/lib/session";
-import { Factory, Play, StopCircle, ClipboardCheck, History, LogOut, User, Home } from "lucide-react";
+import { Play, StopCircle, ClipboardCheck, History, LogOut, User, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard", label: "Ana Sayfa", icon: Home },
     { href: "/dashboard/start", label: "MAKİNE START", icon: Play },
     { href: "/dashboard/stop", label: "DURMA KAYDI", icon: StopCircle },
-    { href: "/dashboard/end-of-day", label: "GÜN SONU", icon: ClipboardCheck },
+    { href: "/dashboard/end-of-day", label: "KAPANIŞ", icon: ClipboardCheck },
     { href: "/dashboard/history", label: "GEÇMİŞ KAYITLAR", icon: History },
   ];
 
@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Top Header */}
       <header className="bg-[#1a237e] text-white px-6 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
-          <Factory className="w-8 h-8" />
+          <img src="/meysu-logo.png" alt="Meysu Logo" className="w-10 h-10 object-contain" />
           <div>
             <h1 className="text-xl font-black tracking-tight leading-none">MEYSU GIDA</h1>
             <p className="text-xs text-blue-300">Kutu Hattı Takip</p>

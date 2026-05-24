@@ -57,7 +57,7 @@ export default function DashboardHome() {
   const quickActions = [
     { href: "/dashboard/start", title: "MAKİNE START", desc: "Makineyi başlat, saati kaydet", icon: Play, color: "from-green-500 to-green-700", iconBg: "bg-green-600" },
     { href: "/dashboard/stop", title: "DURMA KAYDI", desc: "Arıza/duruş nedenini kaydet", icon: StopCircle, color: "from-red-500 to-red-700", iconBg: "bg-red-600" },
-    { href: "/dashboard/end-of-day", title: "GÜN SONU", desc: "Günlük üretim sayısını gir", icon: ClipboardCheck, color: "from-blue-500 to-blue-700", iconBg: "bg-blue-600" },
+    { href: "/dashboard/end-of-day", title: "KAPANIŞ", desc: "Günlük üretim sayısını gir", icon: ClipboardCheck, color: "from-blue-500 to-blue-700", iconBg: "bg-blue-600" },
     { href: "/dashboard/history", title: "GEÇMİŞ", desc: "Tüm kayıtları görüntüle", icon: History, color: "from-purple-500 to-purple-700", iconBg: "bg-purple-600" },
   ];
 
@@ -68,18 +68,18 @@ export default function DashboardHome() {
         <p className="text-lg text-slate-600 mt-2">Kutu hattı makine takip paneline hoş geldiniz. Yapmak istediğiniz işlemi seçin.</p>
       </div>
 
-      {/* Today's stats */}
+      
       <div className="grid grid-cols-3 gap-6">
         <Card className="p-6 border-l-8 border-l-green-500 bg-white shadow-md">
-          <p className="text-sm font-semibold text-slate-500 uppercase">Bugün Start</p>
+          <p className="text-lg font-semibold text-slate-500 uppercase">Start</p>
           <p className="text-5xl font-black text-green-600 mt-2">{stats.startToday}</p>
         </Card>
         <Card className="p-6 border-l-8 border-l-red-500 bg-white shadow-md">
-          <p className="text-sm font-semibold text-slate-500 uppercase">Bugün Duruş</p>
+          <p className="text-lg font-semibold text-slate-500 uppercase"> Duruş</p>
           <p className="text-5xl font-black text-red-600 mt-2">{stats.stopToday}</p>
         </Card>
         <Card className="p-6 border-l-8 border-l-blue-500 bg-white shadow-md">
-          <p className="text-sm font-semibold text-slate-500 uppercase">Bugün Gün Sonu</p>
+          <p className="text-lg font-semibold text-slate-500 uppercase">Kapanış</p>
           <p className="text-5xl font-black text-blue-600 mt-2">{stats.endToday}</p>
         </Card>
       </div>
@@ -137,10 +137,12 @@ export default function DashboardHome() {
 </div>
           {machines.map((m) => (
             <Card key={m.id} className="p-5 flex items-center gap-4 border-2 hover:border-red-300 transition-colors">
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${m.machine_type === "ana" ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-600"}`}>
-                <Factory className="w-7 h-7" />
-                
-              </div>
+            <div className="flex justify-center mb-6">
+            <img
+              src="meysu-logo.png"
+              className="w-28 h-28 object-contain drop-shadow-2xl"
+            />
+          </div>
               <div className="min-w-0">
                 <p className="font-bold text-lg truncate">{m.name}</p>
                 <p className="text-xs uppercase font-semibold text-slate-500">
