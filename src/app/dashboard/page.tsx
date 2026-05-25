@@ -44,7 +44,7 @@ export default function DashboardHome() {
       const [{ count: startCount }, { count: stopCount }, { count: endCount }] = await Promise.all([
         supabase.from("machine_start_logs").select("id", { count: "exact", head: true }).eq("operator_id", s.id).gte("created_at", iso),
         supabase.from("machine_stop_logs").select("id", { count: "exact", head: true }).eq("operator_id", s.id).gte("created_at", iso),
-        supabase.from("machine_end_of_day_logs").select("id", { count: "exact", head: true }).eq("operator_id", s.id).gte("created_at", iso),
+        supabase.from("end_of_day_logs").select("id", { count: "exact", head: true }).eq("operator_id", s.id).gte("created_at", iso),
       ]);
       setStats({
         startToday: startCount || 0,
@@ -116,7 +116,7 @@ export default function DashboardHome() {
           <Cog className="w-7 h-7" /> 
           Sorumlu Olduğunuz Makineler (3)
         </h2>
-        <div className="grid grid-cols-0.5 gap-5">
+        <div className="grid grid-cols-3 gap-5">
           {/* Machines */}
 <div className="bg-white rounded-lg shadow p-4">
   <h3 className="font-bold text-gray-850 mb-5">Sorumlu Olduğunuz Makineler</h3>
@@ -139,7 +139,7 @@ export default function DashboardHome() {
             <Card key={m.id} className="p-5 flex items-center gap-4 border-2 hover:border-red-300 transition-colors">
             <div className="flex justify-center mb-6">
             <img
-              src="meysu-logo.png"
+              src="/meysu-logo.png"
               className="w-28 h-28 object-contain drop-shadow-2xl"
             />
           </div>

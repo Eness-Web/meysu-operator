@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession } from "@/lib/session";
+import { getSession, type OperatorSession } from "@/lib/session";
 import { toast } from "sonner";
-import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS, UNIT_MAP } from "@/lib/constants";
+import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS, UNIT_MAP, getMachineKey } from "@/lib/constants";
+import type { EndOfDayLog } from "@/lib/types";
 
 export default function EndOfDayPage() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<OperatorSession | null>(null);
   const [personnelName, setPersonnelName] = useState("");
   const [shift, setShift] = useState("");
   const [total, setTotal] = useState("");
   const [waste, setWaste] = useState("");
   const [saving, setSaving] = useState(false);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<EndOfDayLog[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTotal, setEditTotal] = useState("");
   const [editWaste, setEditWaste] = useState("");
@@ -25,23 +26,25 @@ export default function EndOfDayPage() {
 
   const fetchToday = async (operatorId: string) => {
     const today = new Date().toISOString().split("T")[0];
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("end_of_day_logs")
       .select("*")
       .eq("operator_id", operatorId)
       .gte("created_at", today)
       .order("created_at", { ascending: false });
+    if (error) { toast.error("Kayıtlar yüklenemedi"); return; }
     if (data) setLogs(data);
   };
 
   const net = Math.max(0, Number(total || 0) - Number(waste || 0));
 
   const handleSave = async () => {
+    if (!session) return;
     if (!personnelName) { toast.error("Personel seçiniz"); return; }
     if (!shift) { toast.error("Vardiya seçiniz"); return; }
     if (!total || !waste) { toast.error("Teneke sayılarını giriniz"); return; }
     setSaving(true);
-    const machineName = MACHINE_MAP[session.role] || "Bilinmiyor";
+    const machineName = MACHINE_MAP[getMachineKey(session.role)] || session.role;
     try {
       const { error } = await supabase.from("end_of_day_logs").insert({
         operator_id: session.id,
@@ -62,6 +65,7 @@ export default function EndOfDayPage() {
   };
 
   const handleEdit = async (id: string) => {
+    if (!session) return;
     const editNet = Math.max(0, Number(editTotal) - Number(editWaste));
     const { error } = await supabase.from("end_of_day_logs").update({
       total_cans: Number(editTotal),
@@ -72,9 +76,9 @@ export default function EndOfDayPage() {
     else toast.error("Hata oluştu");
   };
 
-  const personnel = PERSONNEL_MAP[session?.role] || [];
-  const machineName = MACHINE_MAP[session?.role] || "Bilinmiyor";
-  const unit = UNIT_MAP[session?.role] || "Adet";
+  const personnel = PERSONNEL_MAP[getMachineKey(session?.role ?? "")] ?? [];
+  const machineName = MACHINE_MAP[getMachineKey(session?.role ?? "")] ?? session?.role ?? "";
+  const unit = UNIT_MAP[getMachineKey(session?.role ?? "")] ?? "Adet";
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">

@@ -64,3 +64,17 @@ export const UNIT_MAP: Record<string, string> = {
   cam_paketleme: "Cam Şişe",
   cam_paletleme: "Cam Şişe",
 };
+
+/**
+ * Veritabanındaki role değerini (ör. "KUTU DOLUM", "dolum", "Kutu Dolum")
+ * MACHINE_MAP/PERSONNEL_MAP anahtarına (ör. "dolum") dönüştürür.
+ */
+export function getMachineKey(role: string): string {
+  if (!role) return "";
+  if (role in MACHINE_MAP) return role;
+  const normalized = role.toLowerCase().replace(/\s+/g, "_");
+  if (normalized in MACHINE_MAP) return normalized;
+  const withoutPrefix = normalized.replace(/^kutu_/, "");
+  if (withoutPrefix in MACHINE_MAP) return withoutPrefix;
+  return normalized;
+}

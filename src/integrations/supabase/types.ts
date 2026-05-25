@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      operator_accounts: {
+        Row: { id: string; username: string; password: string; display_name: string; role: string; created_at: string }
+        Insert: { id?: string; username: string; password: string; display_name: string; role: string; created_at?: string }
+        Update: { id?: string; username?: string; password?: string; display_name?: string; role?: string; created_at?: string }
+      }
+      operator_machines: {
+        Row: { operator_id: string; machine_id: string }
+        Insert: { operator_id: string; machine_id: string }
+        Update: { operator_id?: string; machine_id?: string }
+      }
+      machines: {
+        Row: { id: string; line_id: string | null; code: string | null; name: string; machine_type: "ana" | "yan"; output_label: string | null; created_at: string }
+        Insert: { id?: string; line_id?: string | null; code?: string | null; name: string; machine_type: "ana" | "yan"; output_label?: string | null; created_at?: string }
+        Update: { id?: string; line_id?: string | null; code?: string | null; name?: string; machine_type?: "ana" | "yan"; output_label?: string | null; created_at?: string }
+      }
+      machine_start_logs: {
+        Row: { id: string; operator_id: string; operator_name: string; personnel_name: string; machine_name: string; shift: string; start_time: string; note: string | null; created_at: string }
+        Insert: { id?: string; operator_id: string; operator_name: string; personnel_name: string; machine_name: string; shift: string; start_time: string; note?: string | null; created_at?: string }
+        Update: { id?: string; operator_id?: string; operator_name?: string; personnel_name?: string; machine_name?: string; shift?: string; start_time?: string; note?: string | null; created_at?: string }
+      }
+      machine_stop_logs: {
+        Row: { id: string; operator_id: string; operator_name: string; personnel_name: string; machine_name: string; shift: string; stop_reason: string; start_time: string; end_time: string | null; duration_minutes: number | null; solution: string | null; created_at: string }
+        Insert: { id?: string; operator_id: string; operator_name: string; personnel_name: string; machine_name: string; shift: string; stop_reason: string; start_time: string; end_time?: string | null; duration_minutes?: number | null; solution?: string | null; created_at?: string }
+        Update: { id?: string; operator_id?: string; operator_name?: string; personnel_name?: string; machine_name?: string; shift?: string; stop_reason?: string; start_time?: string; end_time?: string | null; duration_minutes?: number | null; solution?: string | null; created_at?: string }
+      }
+      end_of_day_logs: {
+        Row: { id: string; operator_id: string; operator_name: string; personnel_name: string; machine_name: string; shift: string; total_cans: number; waste_cans: number; net_cans: number; created_at: string }
+        Insert: { id?: string; operator_id: string; operator_name: string; personnel_name: string; machine_name: string; shift: string; total_cans: number; waste_cans: number; net_cans: number; created_at?: string }
+        Update: { id?: string; operator_id?: string; operator_name?: string; personnel_name?: string; machine_name?: string; shift?: string; total_cans?: number; waste_cans?: number; net_cans?: number; created_at?: string }
+      }
     }
     Views: {
       [_ in never]: never

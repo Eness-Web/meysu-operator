@@ -2,19 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession } from "@/lib/session";
+import { getSession, type OperatorSession } from "@/lib/session";
 import { toast } from "sonner";
-import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS, STOP_REASONS } from "@/lib/constants";
+import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS, STOP_REASONS, getMachineKey } from "@/lib/constants";
+import type { StopLog } from "@/lib/types";
 
 export default function StopPage() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<OperatorSession | null>(null);
   const [personnelName, setPersonnelName] = useState("");
   const [shift, setShift] = useState("");
   const [reason, setReason] = useState("");
   const [solution, setSolution] = useState("");
   const [saving, setSaving] = useState(false);
-  const [activeLog, setActiveLog] = useState<any>(null);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [activeLog, setActiveLog] = useState<StopLog | null>(null);
+  const [logs, setLogs] = useState<StopLog[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editSolution, setEditSolution] = useState("");
 
@@ -25,24 +26,26 @@ export default function StopPage() {
 
   const fetchLogs = async (operatorId: string) => {
     const today = new Date().toISOString().split("T")[0];
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("machine_stop_logs")
       .select("*")
       .eq("operator_id", operatorId)
       .gte("created_at", today)
       .order("created_at", { ascending: false });
+    if (error) { toast.error("Kayıtlar yüklenemedi"); return; }
     if (data) {
       setLogs(data);
-      setActiveLog(data.find((l: any) => !l.end_time) || null);
+      setActiveLog(data.find((l) => !l.end_time) ?? null);
     }
   };
 
   const handleStart = async () => {
+    if (!session) return;
     if (!personnelName) { toast.error("Personel seçiniz"); return; }
     if (!shift) { toast.error("Vardiya seçiniz"); return; }
     if (!reason) { toast.error("Durma nedeni seçiniz"); return; }
     setSaving(true);
-    const machineName = MACHINE_MAP[session.role] || "Bilinmiyor";
+    const machineName = MACHINE_MAP[getMachineKey(session.role)] || session.role;
     try {
       const { data, error } = await supabase.from("machine_stop_logs").insert({
         operator_id: session.id,
@@ -63,6 +66,7 @@ export default function StopPage() {
   };
 
   const handleEnd = async () => {
+    if (!session || !activeLog) return;
     if (!solution) { toast.error("Çözüm açıklaması yazınız"); return; }
     setSaving(true);
     try {
@@ -83,14 +87,15 @@ export default function StopPage() {
   };
 
   const handleEdit = async (id: string) => {
+    if (!session) return;
     const { error } = await supabase.from("machine_stop_logs").update({ solution: editSolution }).eq("id", id);
     if (!error) { toast.success("Düzeltildi"); setEditingId(null); fetchLogs(session.id); }
     else toast.error("Hata oluştu");
   };
 
   const fmt = (iso: string) => new Date(iso).toLocaleTimeString("tr-TR");
-  const personnel = PERSONNEL_MAP[session?.role] || [];
-  const machineName = MACHINE_MAP[session?.role] || "Bilinmiyor";
+  const personnel = PERSONNEL_MAP[getMachineKey(session?.role ?? "")] ?? [];
+  const machineName = MACHINE_MAP[getMachineKey(session?.role ?? "")] ?? session?.role ?? "";
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">

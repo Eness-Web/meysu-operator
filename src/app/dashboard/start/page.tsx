@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession } from "@/lib/session";
+import { getSession, type OperatorSession } from "@/lib/session";
 import { toast } from "sonner";
-import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS } from "@/lib/constants";
+import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS, getMachineKey } from "@/lib/constants";
+import type { StartLog } from "@/lib/types";
 
 export default function StartPage() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<OperatorSession | null>(null);
   const [personnelName, setPersonnelName] = useState("");
   const [shift, setShift] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<StartLog[]>([]);
   const [now, setNow] = useState(new Date());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNote, setEditNote] = useState("");
@@ -26,20 +27,22 @@ export default function StartPage() {
 
   const fetchLogs = async (operatorId: string) => {
     const today = new Date().toISOString().split("T")[0];
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("machine_start_logs")
       .select("*")
       .eq("operator_id", operatorId)
       .gte("start_time", today)
       .order("start_time", { ascending: false });
+    if (error) { toast.error("Kayıtlar yüklenemedi"); return; }
     if (data) setLogs(data);
   };
 
   const handleSave = async () => {
+    if (!session) return;
     if (!personnelName) { toast.error("Personel seçiniz"); return; }
     if (!shift) { toast.error("Vardiya seçiniz"); return; }
     setSaving(true);
-    const machineName = MACHINE_MAP[session.role] || "Bilinmiyor";
+    const machineName = MACHINE_MAP[getMachineKey(session.role)] || session.role;
     try {
       const { error } = await supabase.from("machine_start_logs").insert({
         operator_id: session.id,
@@ -61,14 +64,15 @@ export default function StartPage() {
   };
 
   const handleEdit = async (id: string) => {
+    if (!session) return;
     const { error } = await supabase.from("machine_start_logs").update({ note: editNote }).eq("id", id);
     if (!error) { toast.success("Kayıt düzeltildi"); setEditingId(null); fetchLogs(session.id); }
     else toast.error("Hata oluştu");
   };
 
   const fmt = (iso: string) => new Date(iso).toLocaleTimeString("tr-TR");
-  const personnel = PERSONNEL_MAP[session?.role] || [];
-  const machineName = MACHINE_MAP[session?.role] || "Bilinmiyor";
+  const personnel = PERSONNEL_MAP[getMachineKey(session?.role ?? "")] ?? [];
+  const machineName = MACHINE_MAP[getMachineKey(session?.role ?? "")] ?? session?.role ?? "";
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">

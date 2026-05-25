@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession } from "@/lib/session";
+import { getSession, type OperatorSession } from "@/lib/session";
 import { toast } from "sonner";
-import { MACHINE_MAP, SHIFTS } from "@/lib/constants";
+import { MACHINE_MAP, SHIFTS, getMachineKey } from "@/lib/constants";
+import type { EndOfDayLog, StopLog, StartLog } from "@/lib/types";
 
 export default function HistoryPage() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<OperatorSession | null>(null);
   const [tab, setTab] = useState<"end" | "stop" | "start">("end");
-  const [endLogs, setEndLogs] = useState<any[]>([]);
-  const [stopLogs, setStopLogs] = useState<any[]>([]);
-  const [startLogs, setStartLogs] = useState<any[]>([]);
+  const [endLogs, setEndLogs] = useState<EndOfDayLog[]>([]);
+  const [stopLogs, setStopLogs] = useState<StopLog[]>([]);
+  const [startLogs, setStartLogs] = useState<StartLog[]>([]);
   const [filterShift, setFilterShift] = useState("");
 
   useEffect(() => {
@@ -25,12 +26,14 @@ export default function HistoryPage() {
       supabase.from("machine_stop_logs").select("*").eq("operator_id", operatorId).order("created_at", { ascending: false }).limit(50),
       supabase.from("machine_start_logs").select("*").eq("operator_id", operatorId).order("start_time", { ascending: false }).limit(50),
     ]);
+    if (e.error || s.error || st.error) { toast.error("Kayıtlar yüklenemedi"); }
     if (e.data) setEndLogs(e.data);
     if (s.data) setStopLogs(s.data);
     if (st.data) setStartLogs(st.data);
   };
 
   const handleDelete = async (table: string, id: string) => {
+    if (!session) return;
     if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (!error) { toast.success("Kayıt silindi"); fetchAll(session.id); }
@@ -39,7 +42,7 @@ export default function HistoryPage() {
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("tr-TR");
   const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("tr-TR");
-  const machineName = MACHINE_MAP[session?.role] || "";
+  const machineName = MACHINE_MAP[getMachineKey(session?.role ?? "")] ?? session?.role ?? "";
 
   const filtered = (logs: any[]) => logs.filter(l =>
     (!filterShift || l.shift === filterShift)
