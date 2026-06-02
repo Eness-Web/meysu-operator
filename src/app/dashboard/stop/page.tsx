@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession, type OperatorSession } from "@/lib/session";
+import type { OperatorSession } from "@/lib/session";
 import { toast } from "sonner";
 import { PERSONNEL_MAP, MACHINE_MAP, SHIFTS, STOP_REASONS, getMachineKey } from "@/lib/constants";
 import type { StopLog } from "@/lib/types";
+import { todayTR, startOfDayTR, endOfDayTR } from "@/lib/dateUtils";
+import { writeAuditLog } from "@/lib/audit";
+
 
 export default function StopPage() {
   const [session, setSession] = useState<OperatorSession | null>(null);
@@ -20,32 +23,56 @@ export default function StopPage() {
   const [editSolution, setEditSolution] = useState("");
 
   useEffect(() => {
-    const s = getSession();
-    if (s) { setSession(s); fetchLogs(s.id); }
-  }, []);
-
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) return;
+    const s = {
+      id: session.user.id,
+      role: session.user.user_metadata?.role || "",
+      displayName: session.user.user_metadata?.display_name || "",
+      username: session.user.email || "",
+    };
+    setSession(s);
+    fetchLogs(s.id);
+  });
+}, []);
   const fetchLogs = async (operatorId: string) => {
-    const today = new Date().toISOString().split("T")[0];
-    const { data, error } = await supabase
-      .from("machine_stop_logs")
-      .select("*")
-      .eq("operator_id", operatorId)
-      .gte("created_at", today)
-      .order("created_at", { ascending: false });
-    if (error) { toast.error("Kayıtlar yüklenemedi"); return; }
-    if (data) {
-      setLogs(data);
-      setActiveLog(data.find((l) => !l.end_time) ?? null);
-    }
-  };
+  const today = todayTR();
+  const { data, error } = await supabase
+    .from("machine_stop_logs")
+    .select("*")
+    .eq("operator_id", operatorId)
+    .gte("created_at", startOfDayTR(today))
+    .lt("created_at", endOfDayTR(today))
+    .order("created_at", { ascending: false });
+  if (error) { toast.error("Kayıtlar yüklenemedi"); return; }
+  if (data) {
+    setLogs(data);
+    setActiveLog(data.find((l) => !l.end_time) ?? null);
+  }
+};
 
   const handleStart = async () => {
     if (!session) return;
     if (!personnelName) { toast.error("Personel seçiniz"); return; }
     if (!shift) { toast.error("Vardiya seçiniz"); return; }
     if (!reason) { toast.error("Durma nedeni seçiniz"); return; }
+    if (activeLog) { toast.error("Bu makine için zaten açık duruş var!"); return; }
     setSaving(true);
     const machineName = MACHINE_MAP[getMachineKey(session.role)] || session.role;
+    const today = todayTR();
+    const { data: openOnMachine } = await supabase
+      .from("machine_stop_logs")
+      .select("id")
+      .eq("machine_name", machineName)
+      .is("end_time", null)
+      .gte("created_at", startOfDayTR(today))
+      .lt("created_at", endOfDayTR(today))
+      .limit(1);
+    if (openOnMachine && openOnMachine.length > 0) {
+      toast.error("Bu makine için zaten açık duruş kaydı var!");
+      setSaving(false);
+      return;
+    }
     try {
       const { data, error } = await supabase.from("machine_stop_logs").insert({
         operator_id: session.id,
@@ -61,7 +88,14 @@ export default function StopPage() {
       setActiveLog(data);
       setPersonnelName(""); setShift(""); setReason("");
       fetchLogs(session.id);
-    } catch { toast.error("Hata oluştu"); }
+      await writeAuditLog({
+  action: "INSERT",
+  tableName: "machine_stop_logs",
+  recordId: data.id,
+  newData: { machine_name: machineName, stop_reason: reason, shift },
+});
+    } 
+    catch { toast.error("Hata oluştu"); }
     finally { setSaving(false); }
   };
 
@@ -77,14 +111,22 @@ export default function StopPage() {
         end_time: endTime.toISOString(),
         duration_minutes: durationMinutes,
         solution,
-      }).eq("id", activeLog.id);
+      }).eq("id", activeLog.id).eq("operator_id", session.id);
       if (error) throw error;
       toast.success(`Duruş bitti! Süre: ${durationMinutes} dakika`);
       setActiveLog(null); setSolution("");
       fetchLogs(session.id);
-    } catch { toast.error("Hata oluştu"); }
+      await writeAuditLog({
+  action: "UPDATE",
+  tableName: "machine_stop_logs",
+  recordId: activeLog.id,
+  newData: { end_time: endTime.toISOString(), duration_minutes: durationMinutes, solution },
+});
+    } 
+    catch { toast.error("Hata oluştu"); }
     finally { setSaving(false); }
   };
+
 
   const handleEdit = async (id: string) => {
     if (!session) return;

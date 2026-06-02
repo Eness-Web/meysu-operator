@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSession, type OperatorSession } from "@/lib/session";
+import type { OperatorSession } from "@/lib/session";
 import { toast } from "sonner";
 import { MACHINE_MAP, SHIFTS, getMachineKey } from "@/lib/constants";
 import type { EndOfDayLog, StopLog, StartLog } from "@/lib/types";
@@ -16,8 +16,17 @@ export default function HistoryPage() {
   const [filterShift, setFilterShift] = useState("");
 
   useEffect(() => {
-    const s = getSession();
-    if (s) { setSession(s); fetchAll(s.id); }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      const s = {
+        id: session.user.id,
+        role: session.user.user_metadata?.role || "",
+        displayName: session.user.user_metadata?.display_name || "",
+        username: session.user.email || "",
+      };
+      setSession(s);
+      fetchAll(s.id);
+    });
   }, []);
 
   const fetchAll = async (operatorId: string) => {
@@ -30,14 +39,6 @@ export default function HistoryPage() {
     if (e.data) setEndLogs(e.data);
     if (s.data) setStopLogs(s.data);
     if (st.data) setStartLogs(st.data);
-  };
-
-  const handleDelete = async (table: string, id: string) => {
-    if (!session) return;
-    if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
-    const { error } = await supabase.from(table).delete().eq("id", id);
-    if (!error) { toast.success("Kayıt silindi"); fetchAll(session.id); }
-    else toast.error("Silme hatası");
   };
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("tr-TR");
@@ -89,7 +90,6 @@ export default function HistoryPage() {
                 <th className="text-center p-3 font-bold">Toplam</th>
                 <th className="text-center p-3 font-bold text-red-600">Fire</th>
                 <th className="text-center p-3 font-bold text-green-600">Net</th>
-                <th className="p-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -101,13 +101,9 @@ export default function HistoryPage() {
                   <td className="p-3 text-center font-bold">{log.total_cans}</td>
                   <td className="p-3 text-center font-bold text-red-600">{log.waste_cans}</td>
                   <td className="p-3 text-center font-bold text-green-600">{log.net_cans}</td>
-                  <td className="p-3">
-                    <button onClick={() => handleDelete("end_of_day_logs", log.id)}
-                      className="bg-red-100 hover:bg-red-200 text-red-600 text-xs font-bold px-2 py-1 rounded">Sil</button>
-                  </td>
                 </tr>
               ))}
-              {filtered(endLogs).length === 0 && <tr><td colSpan={7} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
+              {filtered(endLogs).length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
             </tbody>
           </table>
         )}
@@ -122,7 +118,6 @@ export default function HistoryPage() {
                 <th className="text-center p-3 font-bold">Başlangıç</th>
                 <th className="text-center p-3 font-bold">Bitiş</th>
                 <th className="text-center p-3 font-bold text-red-600">Süre</th>
-                <th className="p-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -134,13 +129,9 @@ export default function HistoryPage() {
                   <td className="p-3 text-center">{fmtTime(log.start_time)}</td>
                   <td className="p-3 text-center">{log.end_time ? fmtTime(log.end_time) : <span className="text-red-500 font-bold">Açık</span>}</td>
                   <td className="p-3 text-center font-bold text-red-600">{log.duration_minutes ? `${log.duration_minutes} dk` : "-"}</td>
-                  <td className="p-3">
-                    <button onClick={() => handleDelete("machine_stop_logs", log.id)}
-                      className="bg-red-100 hover:bg-red-200 text-red-600 text-xs font-bold px-2 py-1 rounded">Sil</button>
-                  </td>
                 </tr>
               ))}
-              {filtered(stopLogs).length === 0 && <tr><td colSpan={7} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
+              {filtered(stopLogs).length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
             </tbody>
           </table>
         )}
@@ -154,7 +145,6 @@ export default function HistoryPage() {
                 <th className="text-left p-3 font-bold">Vardiya</th>
                 <th className="text-center p-3 font-bold">Saat</th>
                 <th className="text-left p-3 font-bold">Not</th>
-                <th className="p-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -165,13 +155,9 @@ export default function HistoryPage() {
                   <td className="p-3 text-xs">{log.shift}</td>
                   <td className="p-3 text-center font-bold text-green-600">{fmtTime(log.start_time)}</td>
                   <td className="p-3 text-gray-500 text-xs">{log.note || "-"}</td>
-                  <td className="p-3">
-                    <button onClick={() => handleDelete("machine_start_logs", log.id)}
-                      className="bg-red-100 hover:bg-red-200 text-red-600 text-xs font-bold px-2 py-1 rounded">Sil</button>
-                  </td>
                 </tr>
               ))}
-              {filtered(startLogs).length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
+              {filtered(startLogs).length === 0 && <tr><td colSpan={5} className="p-6 text-center text-gray-400">Kayıt yok</td></tr>}
             </tbody>
           </table>
         )}

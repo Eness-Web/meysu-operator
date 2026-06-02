@@ -21,6 +21,7 @@ export type OperatorAccount = {
 };
 
 export type StartLog = {
+  product_type?: string;
   id: string;
   operator_id: string;
   operator_name: string;

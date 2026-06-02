@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kutu Dolum Hata Raporlama",
-  description: "Kutu Dolum Hata Raporlama",
+  title: "Meysu Gıda Makine Takip Sistemi",
+description: "Meysu Gıda Makine Takip Sistemi",
 };
 
 export default function RootLayout({

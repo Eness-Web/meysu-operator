@@ -23,6 +23,8 @@ export const PERSONNEL_MAP: Record<string, string[]> = {
   cam_dolum: ["MAHMUT EKİCİ", "MEHMET KAYA"],
   cam_paketleme: [],
   cam_paletleme: [],
+  cam_depal: [],
+  cam_etiket: [],
 };
 
 export const MACHINE_MAP: Record<string, string> = {
@@ -43,6 +45,8 @@ export const MACHINE_MAP: Record<string, string> = {
   cam_dolum: "Cam Dolum",
   cam_paketleme: "Cam Paketleme",
   cam_paletleme: "Cam Paletleme",
+  cam_depal: "Cam Depal",      
+  cam_etiket: "Cam Etiket",
 };
 
 export const UNIT_MAP: Record<string, string> = {
