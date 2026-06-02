@@ -1,4 +1,4 @@
-export const SHIFTS = ["08:30 - 18:00"];
+export const SHIFTS = ["08:30 - 16.30"];
 
 export const STOP_REASONS: string[] = [
   "Makine Arızası",
@@ -13,7 +13,7 @@ export const PERSONNEL_MAP: Record<string, string[]> = {
   depal: ["ŞABAN AYBUGA", "EYÜP KARAMAN"],
 
   // Pet Hattı
-  pet_dolum: ["ALİ YILMAZ"],
+  pet_dolum: ["ALİ YILMAZ,", "FARUK KAYA"],
   pet_sisirme: [],
   pet_etiketleme: [],
   pet_paketleme: [],
